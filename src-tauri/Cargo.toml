@@ -1,0 +1,31 @@
+[package]
+name = "timelapse-maker"
+version = "0.1.0"
+description = "3D printer timelapse video creator"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [] }
+
+[dependencies]
+tauri    = { version = "1.6", features = ["dialog-open", "dialog-save", "path-all", "shell-open", "shell-open-api"] }
+serde    = { version = "1",   features = ["derive"] }
+serde_json = "1"
+tokio    = { version = "1",   features = ["full"] }
+chrono   = { version = "0.4", default-features = false, features = ["clock"] }
+regex    = "1"
+exif     = { package = "kamadak-exif", version = "0.5" }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+strip = true
+opt-level = "s"
+
+[profile.dev.build-override]
+debug = false

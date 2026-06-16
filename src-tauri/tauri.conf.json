@@ -1,0 +1,39 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+  "build": {
+    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "npm run dev",
+    "devPath": "http://localhost:1420",
+    "distDir": "../dist"
+  },
+  "package": {
+    "productName": "TimeLapse Maker",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "dialog": { "open": true, "save": true },
+      "path":   { "all": true },
+      "shell":  { "open": true }
+    },
+    "bundle": {
+      "active": false,
+      "category": "Utility",
+      "identifier": "com.timelapsmaker.app"
+    },
+    "security": { "csp": null },
+    "windows": [
+      {
+        "title": "TimeLapse Maker",
+        "width": 860,
+        "height": 620,
+        "minWidth": 700,
+        "minHeight": 500,
+        "resizable": true,
+        "fullscreen": false,
+        "fileDropEnabled": true
+      }
+    ]
+  }
+}
