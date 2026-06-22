@@ -164,8 +164,8 @@ export default function App() {
   }
 
   function toggleOrientation() {
-    setOutputWidth((w) => outputHeight);
-    setOutputHeight((h) => outputWidth);
+    setOutputWidth(() => outputHeight);
+    setOutputHeight(() => outputWidth);
   }
 
   function openOutputFolder() {

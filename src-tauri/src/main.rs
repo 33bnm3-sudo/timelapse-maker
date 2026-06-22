@@ -159,11 +159,14 @@ async fn make_video(
     }
 
     // Verify FFmpeg is available
-    tokio::process::Command::new("ffmpeg")
-        .arg("-version")
-        .output()
-        .await
-        .map_err(|_| "FFmpeg를 찾을 수 없습니다. FFmpeg를 설치하고 PATH에 추가해주세요.\n(https://ffmpeg.org/download.html)".to_string())?;
+    {
+        let mut chk = tokio::process::Command::new("ffmpeg");
+        chk.arg("-version");
+        #[cfg(windows)]
+        { use std::os::windows::process::CommandExt; chk.creation_flags(0x08000000); }
+        chk.output().await
+            .map_err(|_| "FFmpeg를 찾을 수 없습니다. FFmpeg를 설치하고 PATH에 추가해주세요.\n(https://ffmpeg.org/download.html)".to_string())?;
+    }
 
     // Write concat list to a temp file
     let duration = frames_per_photo as f64 / fps as f64;
@@ -194,26 +197,30 @@ async fn make_video(
         format!("{}scale=trunc(iw/2)*2:trunc(ih/2)*2:flags=lanczos,unsharp=3:3:0.8:3:3:0.4", deflicker_filter)
     };
 
-    let mut child = tokio::process::Command::new("ffmpeg")
-        .args([
-            "-y",
-            "-f", "concat",
-            "-safe", "0",
-            "-i", list_path.to_str().unwrap(),
-            "-vf", &scale_filter,
-            "-c:v", "libx264",
-            "-crf", "16",
-            "-preset", "veryslow",
-            "-pix_fmt", "yuv420p",
-            "-r", &fps.to_string(),
-            "-progress", "pipe:1",
-            "-nostats",
-            &output_path,
-        ])
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::null())
-        .spawn()
-        .map_err(|e| format!("FFmpeg 실행 실패: {e}"))?;
+    let mut cmd = tokio::process::Command::new("ffmpeg");
+    cmd.args([
+        "-y",
+        "-f", "concat",
+        "-safe", "0",
+        "-i", list_path.to_str().unwrap(),
+        "-vf", &scale_filter,
+        "-c:v", "libx264",
+        "-crf", "16",
+        "-preset", "veryslow",
+        "-pix_fmt", "yuv420p",
+        "-r", &fps.to_string(),
+        "-progress", "pipe:1",
+        "-nostats",
+        &output_path,
+    ]);
+    cmd.stdout(std::process::Stdio::piped());
+    cmd.stderr(std::process::Stdio::null());
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+    let mut child = cmd.spawn().map_err(|e| format!("FFmpeg 실행 실패: {e}"))?;
 
     if let Some(stdout) = child.stdout.take() {
         let mut lines = tokio::io::BufReader::new(stdout).lines();
